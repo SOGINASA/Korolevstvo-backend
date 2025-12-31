@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from config import Config
-from models import db, Admin, BlogPost, Settings  # Добавить BlogPost
+from models import db, Admin, BlogPost, Settings, Animator
 from flask_jwt_extended.exceptions import JWTExtendedException
 from werkzeug.exceptions import HTTPException
 import click  # Добавить для CLI команд
@@ -16,7 +16,8 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    CORS(app, supports_credentials=True)
+    app.url_map.strict_slashes = False
+    CORS(app, supports_credentials=True, allowed_origins=app.config['CORS_ORIGINS'])
     
     # Инициализация расширений
     db.init_app(app)
@@ -39,6 +40,8 @@ def create_app():
     from routes.warehouse import warehouse_bp
     from routes.leads import leads_bp
     from routes.upload import upload_bp
+    from routes.animators import animators_bp
+    from routes.shows import shows_bp
     # from routes.bot_messages import telegram_bp
     # from routes.telegram_users import telegram_users_bp
     
@@ -56,7 +59,9 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(company_data_bp, url_prefix='/api/company_data')  # Регистрация blueprint для company_data
+    app.register_blueprint(company_data_bp, url_prefix='/api/company_data')
+    app.register_blueprint(animators_bp, url_prefix='/api/animators')
+    app.register_blueprint(shows_bp, url_prefix='/api/shows')
     
     # Главная страница API
     @app.route('/api')
@@ -77,6 +82,23 @@ def create_app():
             },
             'telegram_bot': '@korolevstvo_chudes_bot'
         })
+
+    # Health check endpoint для Docker
+    @app.route('/api/health')
+    def health_check():
+        try:
+            # Проверяем подключение к базе данных
+            db.session.execute(db.text('SELECT 1'))
+            db_status = 'healthy'
+        except Exception as e:
+            db_status = f'unhealthy: {str(e)}'
+
+        return jsonify({
+            'status': 'healthy' if db_status == 'healthy' else 'degraded',
+            'database': db_status,
+            'version': '1.0.0',
+            'service': 'korolevstvo-backend'
+        }), 200 if db_status == 'healthy' else 503
 
     return app
 
