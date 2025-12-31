@@ -66,7 +66,7 @@ class Config:
     # Настройки бизнес-логики
     BUSINESS_SETTINGS = {
         'company_name': 'Королевство Чудес',
-        'company_phone': '+7 (XXX) XXX-XX-XX',
+        'company_phone': '8 (705) 519 5222',
         'company_email': 'info@prazdnikvdom.kz',
         'company_address': 'г. Петропавловск, ул. Примерная, 123',
         'working_hours': 'Пн-Пт: 9:00-18:00, Сб-Вс: 10:00-16:00',
